@@ -225,5 +225,31 @@ time ./bench_O2_noinline 1000000000
 ```
 Any difference is due to inlining and other optimizations it may enable.
 
+## Helpful Diagrams
 
+Using the code snippet above:
+```
+#include <stdio.h>
 
+static int is_debug(void) { return 0; }
+
+static __attribute__((noinline)) void debug_overlay(void) {
+    puts("debug overlay");
+}
+
+int main(void) {
+    if (is_debug()) debug_overlay();
+    puts("scene");
+    return 0;
+}
+```
+
+<img width="444" height="257" alt="image" src="https://github.com/user-attachments/assets/2ed9f200-cffd-482c-8184-ebf2d13bbc4c" />
+
+(From Claude AI: How inlining, constant-folding, and DCE can chain together)
+
+<img width="377" height="144" alt="image" src="https://github.com/user-attachments/assets/8f304512-791c-408c-a12d-b30a7f6a31fc" />
+
+(From Claude AI: Instruction Cache problem with inlining)
+
+Note that **hot-code** is code that runs frequently, like a loop body. You want hot code to stay inside the cache so that it's easily accessible.
