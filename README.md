@@ -73,6 +73,8 @@ After inlining, it would be as if you wrote **int a = 5*5**, which yields the sa
 A larger benefit is that inlining can *enable other optimizations*.
 For instance, **5*5** can then be constant-folded to 25, and if **a** is unused, then DCE removes it entirely.
 
+**constant-folding** is when the compiler does math at compile-time when every value in an expression is already known, so the program doesn't have to recalculate every time it runs.
+
 A **tradeoff** for function inlining is code bloat. For example, if a large function is inlined at 50 call sites, there are 50 copies of this large function. This can hurt the **instruction cache**.
 
 
@@ -195,9 +197,9 @@ gcc -O2 -S debug.c -o debug2.s
 grep call debug0.s    # call is_debug, call puts...
 grep call debug2.s    # just the call to puts for "scene"
 ```
-At -O2 the function `is_debug` is inlined (becoming 0).
+At -O2 the function `is_debug` is inlined (becoming 0). This is an example of **constant-folding**, since we know is_debug returns 0.
 The `if(0)` branch is dead, and the `debug_overlay` has no callers left, so the compiler deletes the whole function.
-This shows inlining and DCE chaining together.
+This shows inlining, constant-folding, and DCE chaining together.
 
 ### Experiment 3: Function Inlining
 
