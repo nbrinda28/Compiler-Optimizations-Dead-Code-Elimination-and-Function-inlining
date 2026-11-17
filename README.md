@@ -35,7 +35,7 @@ int f(int x) {
     return x + 1;
 }
 ```
-With a flag of -01 or higher, the compiler transforms this into:
+With a flag of -O1 or higher, the compiler transforms this into:
 
 ```
 int f(int x) { return x + 1; }
