@@ -5,7 +5,7 @@ This is a repository created to reflect my exploration of dead code elimination 
 ### Big idea
 In C, a compiler doesn't only translate C into machine code, but it can also rewrite the program as long as the **observable behavior** stays the same. Observable behavior includes what gets print, what gets returned, **volatile variables**, etc. The compiler can decide how other processes happen, which is called the **as-if rule**.
 
-#### Volatile Variables
+### Volatile Variables
 **What is a volatile variable?**
 Volatile is a keyword that signals to the compiler that the variable can change or be observed in ways the compiler cannot see. A compiler normally assumes that a variable only changes when our code changes it. The **volatile** keyword removes that assumption.
 
@@ -75,7 +75,9 @@ For instance, **5*5** can then be constant-folded to 25, and if **a** is unused,
 
 A **tradeoff** for function inlining is code bloat. For example, if a large function is inlined at 50 call sites, there are 50 copies of this large function. This can hurt the **instruction cache**.
 
-**What is the Instruction Cache**
+
+### What is the Instruction Cache?
+
 CPUs have small, fast memories called **caches** that hold recently used data for quick reuse.
 Most CPUs split the closest cache into two parts:
 - **Data Cache**: holds the variables and arrays your programs reads/writes.
@@ -83,7 +85,9 @@ Most CPUs split the closest cache into two parts:
 
 The instruction cache is small and holds a limited amount of space. With inlining, several copies of a large function may get stored in the instruction cache, pushing other, possibly more important code, to be stored in lower levels such as RAM. The CPU would have to fetch the other code from these lower levels, which can cost multiple cycles and slow things down.
 
-**Heuristics: a Possible Fix to the Tradeoff Above**
+
+### Heuristics: a Possible Fix to the Tradeoff Above
+
 A **heuristic** is an educated guess. The compiler doesn't know for sure if inlining a call will make the program faster, so the compiler estimates the costs and benefits and compares them. 
 For inlining, it considers:
 - Function size: small functions over larger ones
@@ -100,7 +104,8 @@ For inlining, it considers:
 
 ## Experimenting With Optimization Levels, Dead Code Elimination, and Function Inlining
 
-**Experiment 1: Timing Across -O0 to -O3**
+### Experiment 1: Timing Across -O0 to -O3
+
 bench.c
 ```
 #include <stdio.h>
@@ -133,8 +138,10 @@ done
 ```
 Run each level 3 times and record the average. Also check the binary size with `ls -l bench_O*` or `size bench_O*`.
 
-**Experiment 2: Dead Code Elimination**
-Part A: A loop that vanishes
+### Experiment 2: Dead Code Elimination
+
+**Part A: A loop that vanishes**
+
 dce.c
 ```
 int main(void) {
@@ -157,7 +164,8 @@ In dce2.s, **main** should be just a few instructions with no loop.
 Now try `volatile long sum = 0;` and rebuild at -O2. 
 The loop should come back because volatile accesses are observable behavior.
 
-Part B: A removed branch and function
+**Part B: A removed branch and function**
+
 debug.c
 ```
 #include <stdio.h>
@@ -191,8 +199,10 @@ At -O2 the function `is_debug` is inlined (becoming 0).
 The `if(0)` branch is dead, and the `debug_overlay` has no callers left, so the compiler deletes the whole function.
 This shows inlining and DCE chaining together.
 
-**Experiment 3: Function Inlining**
+### Experiment 3: Function Inlining
+
 Compare the assembly.
+
 In terminal:
 ```
 gcc -O0 -S bench.c -o bench0.s
