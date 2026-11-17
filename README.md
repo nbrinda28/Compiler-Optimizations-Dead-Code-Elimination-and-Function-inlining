@@ -7,7 +7,7 @@ In C, a compiler doesn't only translate C into machine code, but it can also rew
 
 ### Volatile Variables
 **What is a volatile variable?**
-Volatile is a keyword that signals to the compiler that the variable can change or be observed in ways the compiler cannot see. A compiler normally assumes that a variable only changes when our code changes it. The **volatile** keyword removes that assumption.
+Volatile is a keyword that signals to the compiler that the variable can change or be observed in ways the compiler cannot see. A compiler normally assumes that a variable only changes when our code changes it. The `volatile` keyword removes that assumption.
 
 ```
 volatile int flag = 0;
@@ -35,7 +35,7 @@ int f(int x) {
     return x + 1;
 }
 ```
-With a flag of -O1 or higher, the compiler transforms this into:
+With a flag of `-O1` or higher, the compiler transforms this into:
 
 ```
 int f(int x) { return x + 1; }
@@ -43,7 +43,8 @@ int f(int x) { return x + 1; }
 The compiler knows to do this because it visualizes how data flows in a function.
 
 **Why do Volatile Variables Stop Dead Code Elimination?**
-Volatile objects are considered observable behavior, and DCE only removes code that doesn't affect observable behavior. The tradeoff for this is that a volatile accumulator could make your loop slower because it forces memory traffic, since the compiler cannot skip or combine operations on a volatile object.
+
+Volatile objects are considered observable behavior, and DCE only removes code that doesn't affect observable behavior. The **tradeoff** for this is that a volatile accumulator could make your loop slower because it forces memory traffic, since the compiler cannot skip or combine operations on a volatile object.
 
 ### Real-World Examples of Dead Code Elimination
 - **Debug code in released software**. Developers write logging and debug checks:
@@ -55,7 +56,7 @@ Volatile objects are considered observable behavior, and DCE only removes code t
   Modern compilers handle troubleshooting checks as dead code instead of programmers having to manually delete or comment them out.
 - **Shrinking apps and web pages.** Android's R8 and JavaScript bundlers use the same idea (called "tree shaking") to remove unused library functions.
 - **Large codebases with legacy features.** Big projects can inherit features that are turned off by configuration. The compuler removes this disabled code from the final binary to the program is smaller without having to manually clean it up.
-- **Security-sensitive code.** DCE can backfire. Programmers sometimes overwrite the memory space of used passwords with **00000..** to hide what the original password was. If this password is not printed or used, the compiler may treat that step as dead code (since it doesn't change the final observable behavior), and thus skip it. This would leave the actual password in the computer's memory, making it easy for hackers to access. This is why keywords like **volatile** are necessary, so the compiler does not write off important steps as dead code.
+- **Security-sensitive code.** DCE can backfire. Programmers sometimes overwrite the memory space of used passwords with `00000..` to hide what the original password was. If this password is not printed or used, the compiler may treat that step as dead code (since it doesn't change the final observable behavior), and thus skip it. This would leave the actual password in the computer's memory, making it easy for hackers to access. This is why keywords like `volatile` are necessary, so the compiler does not write off important steps as dead code, which can be considered a **tradeoff** of DCE.
 
 ## Function Inlining
 Calling a function usually has some cost. It requires arguments to be set up, the program to jump to the function, create a stack frame, and then jump back and clean up.
@@ -71,7 +72,7 @@ int main(void) {
 ```
 After inlining, it would be as if you wrote **int a = 5*5**, which yields the same result as if you called the function, but with fewer costs.
 A larger benefit is that inlining can *enable other optimizations*.
-For instance, **5*5** can then be constant-folded to 25, and if **a** is unused, then DCE removes it entirely.
+For instance, `5 * 5` can then be constant-folded to `25`, and if `a` is unused, then DCE removes it entirely.
 
 **constant-folding** is when the compiler does math at compile-time when every value in an expression is already known, so the program doesn't have to recalculate every time it runs.
 
@@ -100,7 +101,7 @@ For inlining, it considers:
 
 ### Real-World Examples of Function Inlining
 - **Getters and setters**. In object-oriented programming, you write small methods like getX() that return a field. Calling them in a loop would be wasteful, so compilers inline them.
-- **Small math helpers**. Functions like **min(a,b), abs(x), square(x)** are a line or two long. They might run billions of times per second in a game or graphics program, so inlining makes them just as fast as writing the math by hand.
+- **Small math helpers**. Functions like `min(a,b)`, `abs(x)`, `square(x)` are a line or two long. They might run billions of times per second in a game or graphics program, so inlining makes them just as fast as writing the math by hand.
 - **The standard library.** Many things in C++'s standard library are small functions that rely on inlining. Without it, they would be much slower.
 - **Java's JIT.** In Java, the JVM watches the methods that are running most often and inlines those.
 
@@ -125,7 +126,7 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 ```
-Printing **total** stops DCE from deleting the loop because it is considered an observable variable.
+Printing `total` stops DCE from deleting the loop because it is considered an observable variable.
 
 Build and time each level. In the command line:
 ```
@@ -159,11 +160,11 @@ gcc -O2 dce.c -o dce2 && time ./dce2
 gcc -O2 -S dce.c -o dce2.s
 cat dce2.s
 ```
-At -O0, it takes about 1 second
-At -O2, it's almost instant.
-In dce2.s, **main** should be just a few instructions with no loop.
+At `-O0`, it takes about 1 second
+At `-O2`, it's almost instant.
+In `dce2.s`, `main` should be just a few instructions with no loop.
 
-Now try `volatile long sum = 0;` and rebuild at -O2. 
+Now try `volatile long sum = 0;` and rebuild at `-O2`. 
 The loop should come back because volatile accesses are observable behavior.
 
 **Part B: A removed branch and function**
@@ -197,7 +198,7 @@ gcc -O2 -S debug.c -o debug2.s
 grep call debug0.s    # call is_debug, call puts...
 grep call debug2.s    # just the call to puts for "scene"
 ```
-At -O2 the function `is_debug` is inlined (becoming 0). This is an example of **constant-folding**, since we know is_debug returns 0.
+At `-O2` the function `is_debug` is inlined (becoming 0). This is an example of **constant-folding**, since we know is_debug returns 0.
 The `if(0)` branch is dead, and the `debug_overlay` has no callers left, so the compiler deletes the whole function.
 This shows inlining, constant-folding, and DCE chaining together.
 
@@ -253,6 +254,35 @@ int main(void) {
 (From Claude AI: Instruction Cache problem with inlining)
 
 Note that **hot-code** is code that runs frequently, like a loop body. You want hot code to stay inside the cache so that it's easily accessible.
+
+## Reflections and Takeaways
+For this assignment, I began by asking Claude about a general overview of compiler optimizations, dead code elimination, and function inlining. 
+
+From there, I listed more questions I had on each topic, whether it was unfamiliar vocabulary that Claude used, or certain concepts that were still confusing. For instance, one of my prompts was:
+
+    "lets clarify function inlining
+    How can inlining a large function at multiple call sites hurt the instruction cache? What is the instruction cache?
+    What are hueristics and how does the compiler use it?
+    What is constant-folding?"
+
+I found that starting broad and narrowing down on the topics helped me pinpoint exactly what I wanted to learn and discuss. Claude also provided me with analogies that helped me conceptualize topics better.
+
+Furthermore, I asked it to create a quiz so I could gauge my understanding of the knowledge covered, and it checked my answers and gave me explanations on why they were correct. For instance, I asked:
+
+    "Can you quiz me on compiler optimzation, function inlining, and dce based on what we discussed above?"
+
+Asking Claude to create diagrams was another way I could help drive these concepts home:
+
+    "Are there any diagrams or visualizations you can provide to help conceptualize this further?"
+
+In the future, I might prompt Claude to create interactive diagrams to walk me through concepts I am struggling to visualize on my own. Additionally, I could use this AI to help quiz myself to see how much I know.
+
+Some interesting and surprising **takeaways** I learned include:
+- The compiler rewrites your code (As-if rule)
+- DCE removes what you don't use, but thw `volatile` keyword can change that
+- Inlining is powerful because it can enable other optimizations (chaining)
+- Optimizations can have trade-offs.
+- As a side note: I also learned how to format and write a `README.md`, which I haven't done before.
 
 ## Additional Resources
 Claude AI Chat: https://claude.ai/share/1bdc886a-1bf3-4f69-84a4-4293d6cc1f43 
