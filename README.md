@@ -141,6 +141,12 @@ done
 ```
 Run each level 3 times and record the average. Also check the binary size with `ls -l bench_O*` or `size bench_O*`.
 
+**Experiment Results**
+
+<img width="329" height="282" alt="image" src="https://github.com/user-attachments/assets/f5bed797-9c03-4edf-ab22-16f06b24a9b1" />
+
+You can see a clear difference in the time of the least optimized and most optimized results.
+
 ### Experiment 2: Dead Code Elimination
 
 **Part A: A loop that vanishes**
