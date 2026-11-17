@@ -92,10 +92,126 @@ For inlining, it considers:
 - Constant arguments: inlining can simplify function bodies using known arguments.
 - Recursion: recursive functions are harder to inline since the body contains a call to itself.
 
-## Real-World Examples of Dead Code Elimination
+### Real-World Examples of Function Inlining
 - **Getters and setters**. In object-oriented programming, you write small methods like getX() that return a field. Calling them in a loop would be wasteful, so compilers inline them.
 - **Small math helpers**. Functions like **min(a,b), abs(x), square(x)** are a line or two long. They might run billions of times per second in a game or graphics program, so inlining makes them just as fast as writing the math by hand.
 - **The standard library.** Many things in C++'s standard library are small functions that rely on inlining. Without it, they would be much slower.
 - **Java's JIT.** In Java, the JVM watches the methods that are running most often and inlines those.
+
+## Experimenting With Optimization Levels, Dead Code Elimination, and Function Inlining
+
+**Experiment 1: Timing Across -O0 to -O3**
+bench.c
+```
+#include <stdio.h>
+#include <stdlib.h>
+
+static int square(int x) { return x * x; }
+
+int main(int argc, char *argv[]) {
+    long n = (argc > 1) ? atol(argv[1]) : 1000000000L;  // not a compile-time constant
+    long total = 0;
+    for (long i = 0; i < n; i++) {
+        total += square(i % 100);
+    }
+    printf("%ld\n", total);   // result is used, so the loop isn't dead code
+    return 0;
+}
+```
+Printing **total** stops DCE from deleting the loop because it is considered an observable variable.
+
+Build and time each level. In the command line:
+```
+for O in O0 O1 O2 O3; do gcc -$O bench.c -o bench_$O; done
+
+for O in O0 O1 O2 O3; do
+  echo "== -$O"
+  for run in 1 2 3; do
+    ( time ./bench_$O 1000000000 > /dev/null ) 2>&1 | grep real
+  done
+done
+```
+Run each level 3 times and record the average. Also check the binary size with `ls -l bench_O*` or `size bench_O*`.
+
+**Experiment 2: Dead Code Elimination**
+Part A: A loop that vanishes
+dce.c
+```
+int main(void) {
+    long sum = 0;
+    for (long i = 0; i < 1000000000; i++) sum += i;
+    return 0;   // sum is never used
+}
+```
+In terminal:
+```
+gcc -O0 dce.c -o dce0 && time ./dce0
+gcc -O2 dce.c -o dce2 && time ./dce2
+gcc -O2 -S dce.c -o dce2.s
+cat dce2.s
+```
+At -O0, it takes about 1 second
+At -O2, it's almost instant.
+In dce2.s, **main** should be just a few instructions with no loop.
+
+Now try `volatile long sum = 0;` and rebuild at -O2. 
+The loop should come back because volatile accesses are observable behavior.
+
+Part B: A removed branch and function
+debug.c
+```
+#include <stdio.h>
+
+static int is_debug(void) { return 0; }
+
+static __attribute__((noinline)) void debug_overlay(void) {
+    puts("debug overlay");
+}
+
+int main(void) {
+    if (is_debug()) debug_overlay();
+    puts("scene");
+    return 0;
+}
+```
+In terminal:
+```
+gcc -O0 debug.c -o debug0
+gcc -O2 debug.c -o debug2
+
+nm debug0 | grep -E "is_debug|debug_overlay"   # both symbols present
+nm debug2 | grep -E "is_debug|debug_overlay"   # both gone
+
+gcc -O0 -S debug.c -o debug0.s
+gcc -O2 -S debug.c -o debug2.s
+grep call debug0.s    # call is_debug, call puts...
+grep call debug2.s    # just the call to puts for "scene"
+```
+At -O2 the function `is_debug` is inlined (becoming 0).
+The `if(0)` branch is dead, and the `debug_overlay` has no callers left, so the compiler deletes the whole function.
+This shows inlining and DCE chaining together.
+
+**Experiment 3: Function Inlining**
+Compare the assembly.
+In terminal:
+```
+gcc -O0 -S bench.c -o bench0.s
+gcc -O2 -S bench.c -o bench2.s
+grep -n "call" bench0.s    # expect: call square
+grep -n "call" bench2.s    # square call should be gone
+```
+Ask GCC what it inlined:
+```
+gcc -O2 -fopt-info-inline-optimized -c bench.c
+```
+Isolate inlining's effect on speed.
+```
+gcc -O2 bench.c -o bench_O2
+gcc -O2 -fno-inline bench.c -o bench_O2_noinline
+time ./bench_O2 1000000000
+time ./bench_O2_noinline 1000000000
+```
+Any difference is due to inlining and other optimizations it may enable.
+
 
 
