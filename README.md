@@ -253,3 +253,21 @@ int main(void) {
 (From Claude AI: Instruction Cache problem with inlining)
 
 Note that **hot-code** is code that runs frequently, like a loop body. You want hot code to stay inside the cache so that it's easily accessible.
+
+## Additional Resources
+Claude AI Chat: https://claude.ai/share/1bdc886a-1bf3-4f69-84a4-4293d6cc1f43 
+
+GCC Optimization Options: https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html
+
+As-If Rule: https://en.cppreference.com/w/c/language/as_if
+
+Dead Code Elimination: https://opencs.aalto.fi/en/courses/modern-and-emerging-programming-languages/part-7/3-compiler-optimization-techniques
+
+Volatile and Naive Benchmarks: https://www.mathworks.com/help/bugfinder/ref/certcrec.msc06c.html
+
+Constant-Folding: https://en.wikipedia.org/wiki/Constant_folding
+
+Inlining and the Instruction Cache: https://en.wikipedia.org/wiki/Inline_expansion
+
+Hot Code and Profile-Guided Optimization: https://arxiv.org/pdf/1403.6997
+
