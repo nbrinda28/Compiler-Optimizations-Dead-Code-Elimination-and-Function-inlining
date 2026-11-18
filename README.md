@@ -262,27 +262,64 @@ This shows inlining, constant-folding, and DCE chaining together.
 
 ### Experiment 3: Function Inlining
 
-Compare the assembly.
+Create the followign 
+inline_bench.c
+
+```
+#include <stdio.h>
+#include <stdlib.h>
+
+#ifdef NOINLINE
+#define MODE __attribute__((noinline))
+#else
+#define MODE __attribute__((always_inline)) inline
+#endif
+
+static MODE unsigned mix(unsigned x) { return x * 3u + 1u; }
+
+int main(int argc, char *argv[]) {
+    long reps = (argc > 1) ? atol(argv[1]) : 250000L;
+    enum { N = 4096 };
+    static unsigned a[N];
+    for (int i = 0; i < N; i++) a[i] = i;
+    for (long r = 0; r < reps; r++)
+        for (int i = 0; i < N; i++)
+            a[i] = mix(a[i]);
+    printf("%u\n", a[N - 1]);
+    return 0;
+}
+```
 
 In terminal:
 ```
-gcc -O0 -S bench.c -o bench0.s
-gcc -O2 -S bench.c -o bench2.s
-grep -n "call" bench0.s    # expect: call square
-grep -n "call" bench2.s    # square call should be gone
+gcc -O2 inline_bench.c -o ib_inline
+gcc -O2 -DNOINLINE inline_bench.c -o ib_noinline
+./ib_inline 1000
+./ib_noinline 1000
+gcc -O2 -S inline_bench.c -o ib_inline.s
+gcc -O2 -DNOINLINE -S inline_bench.c -o ib_noinline.s
+grep -n call ib_inline.s
+grep -n call ib_noinline.s
+nm ib_inline | grep mix
+nm ib_noinline | grep mix
+grep -c xmm ib_inline.s
+grep -c xmm ib_noinline.s
+for i in 1 2 3; do ( time ./ib_inline 250000 ) 2>&1 | grep real; done
+for i in 1 2 3; do ( time ./ib_noinline 250000 ) 2>&1 | grep real; done
+size ib_inline ib_noinline
 ```
-Ask GCC what it inlined:
-```
-gcc -O2 -fopt-info-inline-optimized -c bench.c
-```
-Isolate inlining's effect on speed.
-```
-gcc -O2 bench.c -o bench_O2
-gcc -O2 -fno-inline bench.c -o bench_O2_noinline
-time ./bench_O2 1000000000
-time ./bench_O2_noinline 1000000000
-```
+
 Any difference is due to inlining and other optimizations it may enable.
+
+**Experiment Results**
+
+
+<img width="400" height="475" alt="image" src="https://github.com/user-attachments/assets/9f9053b9-ad14-45ca-97f3-e9637d3031df" />
+
+<img width="463" height="111" alt="image" src="https://github.com/user-attachments/assets/d9c94b34-99e3-4dc9-89bb-01ad2e3475ba" />
+
+
+We can clearly see a difference in time between the inline and no-inline executions.
 
 ## Helpful Diagrams
 
