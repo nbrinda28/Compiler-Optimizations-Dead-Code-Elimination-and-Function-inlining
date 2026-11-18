@@ -159,19 +159,62 @@ int main(void) {
     return 0;   // sum is never used
 }
 ```
-In terminal:
-```
-gcc -O0 dce.c -o dce0 && time ./dce0
-gcc -O2 dce.c -o dce2 && time ./dce2
-gcc -O2 -S dce.c -o dce2.s
-cat dce2.s
-```
+
 At `-O0`, it takes about 1 second
 At `-O2`, it's almost instant.
 In `dce2.s`, `main` should be just a few instructions with no loop.
 
 Now try `volatile long sum = 0;` and rebuild at `-O2`. 
+
+dce_volatile.c
+```
+int main(void) {
+    volatile long sum = 0;   // volatile: every access is observable behavior
+    for (long i = 0; i < 1000000000; i++) sum += i;
+    return 0;
+}
+```
+
 The loop should come back because volatile accesses are observable behavior.
+
+Run the following in the terminal to check:
+```
+mkdir -p out
+
+# Build all three binaries
+gcc -O0 dce.c          -o out/dce0
+gcc -O2 dce.c          -o out/dce2
+gcc -O2 dce_volatile.c -o out/dce2_vol
+
+# Time each one
+echo "--- dce -O0 ---";          time ./out/dce0
+echo "--- dce -O2 ---";          time ./out/dce2
+echo "--- dce_volatile -O2 ---"; time ./out/dce2_vol
+
+# Generate assembly
+gcc -O0 -S dce.c          -o out/dce0.s
+gcc -O2 -S dce.c          -o out/dce2.s
+gcc -O2 -S dce_volatile.c -o out/dce2_vol.s
+
+# Instruction counts (directives, comments and labels excluded)
+for f in dce0 dce2 dce2_vol; do
+  printf "%s: " "$f"
+  grep -Ev '^\s*(\.|#|$)|^[A-Za-z_.0-9]+:' out/$f.s | wc -l
+done
+
+# Inspect the -O2 assembly (no loop) and the volatile one (loop is back)
+echo "--- dce2.s ---";     cat out/dce2.s
+echo "--- dce2_vol.s ---"; cat out/dce2_vol.s
+```
+
+**Experiment Results**
+
+<img width="152" height="199" alt="image" src="https://github.com/user-attachments/assets/225e7518-e3b4-4f22-a7df-d621161d0fa9" />
+
+
+<img width="466" height="112" alt="image" src="https://github.com/user-attachments/assets/7265be56-3644-43b6-8116-d45f6bee59ad" />
+
+You can see the clear time difference between when the loop is deleted by DCE and when `volatile` forces it back.
 
 **Part B: A removed branch and function**
 
