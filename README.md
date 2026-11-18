@@ -381,7 +381,7 @@ Some interesting and surprising **takeaways** I learned include:
 - Optimizations can have trade-offs.
 - As a side note: I also learned how to format and write a `README.md`, which I haven't done before.
 
-## Additional Resources
+## Claude AI Conversation and Additional Resources
 Claude AI Chat: https://claude.ai/share/1bdc886a-1bf3-4f69-84a4-4293d6cc1f43 
 
 GCC Optimization Options: https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html
