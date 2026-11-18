@@ -107,6 +107,8 @@ For inlining, it considers:
 
 ## Experimenting With Optimization Levels, Dead Code Elimination, and Function Inlining
 
+All files for the following experiments can be found in this repository.
+
 ### Experiment 1: Timing Across -O0 to -O3
 
 bench.c
