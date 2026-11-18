@@ -236,20 +236,29 @@ int main(void) {
 ```
 In terminal:
 ```
-gcc -O0 debug.c -o debug0
-gcc -O2 debug.c -o debug2
-
-nm debug0 | grep -E "is_debug|debug_overlay"   # both symbols present
-nm debug2 | grep -E "is_debug|debug_overlay"   # both gone
-
-gcc -O0 -S debug.c -o debug0.s
-gcc -O2 -S debug.c -o debug2.s
-grep call debug0.s    # call is_debug, call puts...
-grep call debug2.s    # just the call to puts for "scene"
+mkdir -p out
+gcc -O0 debug.c -o out/debug0
+gcc -O2 debug.c -o out/debug2
+nm out/debug0 | grep -E "is_debug|debug_overlay"
+nm out/debug2 | grep -E "is_debug|debug_overlay" || echo "(none)"
+gcc -O0 -S debug.c -o out/debug0.s
+gcc -O2 -S debug.c -o out/debug2.s
+grep call out/debug0.s
+grep call out/debug2.s
+./out/debug0
+./out/debug2
 ```
 At `-O2` the function `is_debug` is inlined (becoming 0). This is an example of **constant-folding**, since we know is_debug returns 0.
 The `if(0)` branch is dead, and the `debug_overlay` has no callers left, so the compiler deletes the whole function.
 This shows inlining, constant-folding, and DCE chaining together.
+
+**Experiment Result**
+
+<img width="352" height="245" alt="image" src="https://github.com/user-attachments/assets/38ff7498-7a8e-4a57-8814-a85303fbd81b" />
+
+
+<img width="469" height="215" alt="image" src="https://github.com/user-attachments/assets/ee1bf668-9d43-43a5-af96-adb6bbf2cbd6" />
+
 
 ### Experiment 3: Function Inlining
 
