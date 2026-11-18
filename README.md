@@ -3,11 +3,11 @@ This is a repository created to reflect my exploration of dead code elimination 
 
 ## Compiler Optimizations in C
 ### Big idea
-In C, a compiler doesn't only translate C into machine code, but it can also rewrite the program as long as the **observable behavior** stays the same. Observable behavior includes what gets print, what gets returned, **volatile variables**, etc. The compiler can decide how other processes happen, which is called the **as-if rule**.
+In C, a compiler doesn't only translate C into machine code, but it can also rewrite the program as long as the **observable behavior** stays the same. Observable behavior includes what gets printed, what gets returned, **volatile variables**, etc. The compiler can decide how other processes happen, which is called the **as-if rule**.
 
 ### Volatile Variables
 **What is a volatile variable?**
-Volatile is a keyword that signals to the compiler that the variable can change or be observed in ways the compiler cannot see. A compiler normally assumes that a variable only changes when our code changes it. The `volatile` keyword removes that assumption.
+`volatile` is a keyword that signals to the compiler that the variable can change or be observed in ways the compiler cannot see. A compiler normally assumes that a variable only changes when our code changes it. The `volatile` keyword removes that assumption.
 
 ```
 volatile int flag = 0;
@@ -55,8 +55,8 @@ Volatile objects are considered observable behavior, and DCE only removes code t
 ```
   Modern compilers handle troubleshooting checks as dead code instead of programmers having to manually delete or comment them out.
 - **Shrinking apps and web pages.** Android's R8 and JavaScript bundlers use the same idea (called "tree shaking") to remove unused library functions.
-- **Large codebases with legacy features.** Big projects can inherit features that are turned off by configuration. The compuler removes this disabled code from the final binary to the program is smaller without having to manually clean it up.
-- **Security-sensitive code.** DCE can backfire. Programmers sometimes overwrite the memory space of used passwords with `00000..` to hide what the original password was. If this password is not printed or used, the compiler may treat that step as dead code (since it doesn't change the final observable behavior), and thus skip it. This would leave the actual password in the computer's memory, making it easy for hackers to access. This is why keywords like `volatile` are necessary, so the compiler does not write off important steps as dead code, which can be considered a **tradeoff** of DCE.
+- **Large codebases with legacy features.** Big projects can inherit features that are turned off by configuration. The compiler removes this disabled code from the final binary to the program is smaller without having to manually clean it up.
+- **Security-sensitive code.** DCE can backfire. Programmers sometimes overwrite the memory space of used passwords with `00000..` to hide what the original password was. If this password is not printed or used, the compiler may treat that step as dead code (since it doesn't change the final observable behavior), and thus skip it. This would leave the actual password in the computer's memory, making it easy for hackers to access. This is why keywords like `volatile` are necessary, so the compiler does not write off important steps as dead code, which can be considered a **trade-off** of DCE.
 
 ## Function Inlining
 Calling a function usually has some cost. It requires arguments to be set up, the program to jump to the function, create a stack frame, and then jump back and clean up.
@@ -350,23 +350,23 @@ int main(void) {
 
 (From Claude AI: Instruction Cache problem with inlining)
 
-Note that **hot-code** is code that runs frequently, like a loop body. You want hot code to stay inside the cache so that it's easily accessible.
+Note that **hot code** is code that runs frequently, like a loop body. You want hot code to stay inside the cache so that it's easily accessible.
 
 ## Reflections and Takeaways
 For this assignment, I began by asking Claude about a general overview of compiler optimizations, dead code elimination, and function inlining. 
 
 From there, I listed more questions I had on each topic, whether it was unfamiliar vocabulary that Claude used, or certain concepts that were still confusing. For instance, one of my prompts was:
 
-    "lets clarify function inlining
+    "Let's clarify function inlining
     How can inlining a large function at multiple call sites hurt the instruction cache? What is the instruction cache?
-    What are hueristics and how does the compiler use it?
+    What are heuristics, and how does the compiler use it?
     What is constant-folding?"
 
 I found that starting broad and narrowing down on the topics helped me pinpoint exactly what I wanted to learn and discuss. Claude also provided me with analogies that helped me conceptualize topics better.
 
 Furthermore, I asked it to create a quiz so I could gauge my understanding of the knowledge covered, and it checked my answers and gave me explanations on why they were correct. For instance, I asked:
 
-    "Can you quiz me on compiler optimzation, function inlining, and dce based on what we discussed above?"
+    "Can you quiz me on compiler optimization, function inlining, and DCE based on what we discussed above?"
 
 Asking Claude to create diagrams was another way I could help drive these concepts home:
 
@@ -376,7 +376,7 @@ In the future, I might prompt Claude to create interactive diagrams to walk me t
 
 Some interesting and surprising **takeaways** I learned include:
 - The compiler rewrites your code (As-if rule)
-- DCE removes what you don't use, but thw `volatile` keyword can change that
+- DCE removes what you don't use, but the `volatile` keyword can change that
 - Inlining is powerful because it can enable other optimizations (chaining)
 - Optimizations can have trade-offs.
 - As a side note: I also learned how to format and write a `README.md`, which I haven't done before.
